@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { AuthPlugin, UserProfilePlugin, CardsPlugin, OrdersPlugin } from '@/components/index.js';
 import { useRouter } from 'vue-router';
 import { useApiClient } from '@/api/ApiClient';
 

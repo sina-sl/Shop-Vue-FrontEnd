@@ -4,7 +4,7 @@
     <div v-if="isLoading">Loading your orders...</div>
     <div v-else-if="error" style="color: red;">{{ error }}</div>
     <ul v-else>
-      <li v-for="order in orders" :key="order.id">
+      <li v-for="order in orders.content" :key="order.id">
         <router-link :to="{ name: 'OrderDetails', params: { orderId: order.id } }">
           Order #{{ order.id }} - {{ order.status }} - {{ order.createdAt }}
         </router-link>
@@ -15,7 +15,7 @@
           <span v-else>No card info</span>
         </div>
         <button
-          v-if="order.status === 'JUST_CREATED' || order.status === 'PENDING'"
+          v-if="order.status === OrderStatus.JUST_CREATED"
           :disabled="payingOrderId === order.id"
           @click="payForOrder(order.id)"
         >
@@ -28,13 +28,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { useApiClient } from '@/api/ApiClient';
-import type { Order } from '@/api/OrderApi';
-import type { PayOrderResponse } from '@/api/OrderApi';
+import {onMounted, ref} from 'vue';
+import {useApiClient} from '@/api/ApiClient';
+import {OrderStatus, PaymentMethod} from "@/api/types.ts";
 
 const api = useApiClient();
-const orders = ref<Order[]>([]);
+const orders = ref<Page<Order> | null>(null);
+
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const payingOrderId = ref<number | null>(null);
@@ -43,7 +43,9 @@ const fetchOrders = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const res = await api.order.getMyOrders();
+    const res = await api.order.searchUserOrders({
+      // search:"ss"
+    });
     orders.value = res.data;
   } catch (e: any) {
     error.value = e.response?.data || 'Failed to fetch orders';
@@ -55,9 +57,12 @@ const fetchOrders = async () => {
 const payForOrder = async (orderId: number) => {
   payingOrderId.value = orderId;
   try {
-    const res = await api.order.payOrder({ orderId });
-    if (res.data.paymentLink) {
-      window.open(res.data.paymentLink, '_blank');
+    const res = await api.payment.createPayment({
+      orderId: orderId,
+      paymentMethod: PaymentMethod.ZARINPAL
+    });
+    if (res.data) {
+      window.open(res.data, '_blank');
     } else {
       alert('No payment link returned.');
     }
@@ -69,4 +74,4 @@ const payForOrder = async (orderId: number) => {
 };
 
 onMounted(fetchOrders);
-</script> 
+</script>

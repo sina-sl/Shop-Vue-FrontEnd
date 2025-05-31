@@ -21,6 +21,7 @@ const errorMessage = ref<string | null>(null);
 const handleCallback = async () => {
   const authority = route.query.Authority as string | undefined;
   const status = route.query.Status as string | undefined;
+  const orderId = route.query.orderId as string | undefined;
 
   if (!authority || !status) {
     errorMessage.value = 'Missing payment parameters.';
@@ -29,7 +30,11 @@ const handleCallback = async () => {
   }
 
   try {
-    const res = await api.order.verifyPayment(authority, status);
+    const res = await api.payment.verifyPayment({
+      status,
+      orderId,
+      authority
+    });
     successMessage.value = res.data; // Assuming backend returns a success message
   } catch (err) {
     errorMessage.value = (err as Error).message;

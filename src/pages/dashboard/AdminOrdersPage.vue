@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
 import { useApiClient } from '@/api/ApiClient';
-import type { Order } from '@/api/OrderApi';
+import type {Order, Page} from "@/api/types.ts";
 
 const api = useApiClient();
 
-const allOrders = ref<Order[]>([]);
+const allOrders = ref<Page<Order>| null>(null);
 const selectedOrder = ref<Order|null>(null);
 const updateStatus = ref('');
 const error = ref<string | null>(null);
@@ -15,7 +15,7 @@ const fetchAllOrders = async () => {
   error.value = null;
   success.value = null;
   try {
-    const res = await api.order.getAllOrders();
+    const res = await api.admin.searchOrders({});
     allOrders.value = res.data;
   } catch (err: any) {
     error.value = err.response?.data || 'Failed to fetch all orders';
@@ -57,7 +57,7 @@ onMounted(fetchAllOrders);
     <h4>All Orders</h4>
     <button @click="fetchAllOrders">Refresh Orders</button>
     <ul style="list-style: none; padding: 0;">
-      <li v-for="order in allOrders" :key="order.id" style="margin-bottom: 0.5rem;">
+      <li v-for="order in allOrders?.content" :key="order.id" style="margin-bottom: 0.5rem;">
         <a href="#" @click.prevent="fetchOrderById(order.id)">Order ID: {{ order.id }}</a> (Status: {{ order.status }})
       </li>
     </ul>

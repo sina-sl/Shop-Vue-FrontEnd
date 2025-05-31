@@ -1,23 +1,34 @@
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { useApiClient } from '@/api/ApiClient';
-import type { CardRequest, CardResponse } from '@/api/CardApi';
+import {onMounted, ref} from 'vue';
+import {useApiClient} from '@/api/ApiClient';
+import {CardCreationData, CardWithStockCountDto, DeliveryType, Page, PricingType} from "@/api/types.ts";
 
 const api = useApiClient();
 
-const cards = ref<CardResponse[]>([]);
-const newCard = ref<CardRequest>({ title: '', description: '', price: 0, code: '', imageUrl: '' });
-const editingCard = ref<CardResponse | null>(null);
+const cards = ref<Page<CardWithStockCountDto> | null>(null);
+const newCard = ref<CardCreationData>({
+  code: '',
+  title: '',
+  price: 0,
+  imageUrl: '',
+  isActive: false,
+  description: '',
+  pricingType: PricingType.LOCAL,
+  deliveryType: DeliveryType.READY_TO_SHIP
+});
+
+
+const editingCard = ref<CardCreationData | null>(null);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 const showStockFormFor = ref<number|null>(null);
-const stockCodes = ref<string>('');
+const stockCount = ref<number>(0);
 
 const fetchAllCards = async () => {
   error.value = null;
   success.value = null;
   try {
-    const res = await api.card.listCards();
+    const res = await api.admin.searchCards({});
     cards.value = res.data;
   } catch (err: any) {
     error.value = err.response?.data || 'Failed to fetch cards';
@@ -28,7 +39,7 @@ const addNewCard = async () => {
   error.value = null;
   success.value = null;
   try {
-    await api.card.addCard(newCard.value);
+    await api.admin.addCard(newCard.value);
     success.value = 'Card added successfully!';
     newCard.value = { title: '', description: '', price: 0, code: '', imageUrl: '' };
     fetchAllCards(); // Refresh list
@@ -47,12 +58,12 @@ const cancelEditing = () => {
 
 const openStockForm = (cardId: number) => {
   showStockFormFor.value = cardId;
-  stockCodes.value = '';
+  stockCount.value = 0;
 };
 
 const cancelStockForm = () => {
   showStockFormFor.value = null;
-  stockCodes.value = '';
+  stockCount.value = 0;
 };
 
 const addStockItems = async (cardId: number) => {
@@ -60,13 +71,12 @@ const addStockItems = async (cardId: number) => {
   success.value = null;
   try {
     // Split codes by comma, newline, or space, and filter out empty strings
-    const codes = stockCodes.value.split(/[,\n\r\s]+/).map(c => c.trim()).filter(Boolean);
-    if (!codes.length) {
-      error.value = 'Please enter at least one code.';
+    if (!stockCount.value > 0) {
+      error.value = 'Count must be greater than 0';
       return;
     }
-    await api.card.addStockItems({ cardId, codes });
-    success.value = `Added ${codes.length} stock item(s) to card.`;
+    await api.admin.addStockItems({ cardId, count: stockCount.value });
+    success.value = `Added ${stockCount.value} stock item(s) to card.`;
     cancelStockForm();
     fetchAllCards();
   } catch (err: any) {
@@ -92,19 +102,22 @@ onMounted(fetchAllCards);
       <input v-model="newCard.price" type="number" placeholder="Price" required />
       <input v-model="newCard.code" placeholder="Code" required />
       <input v-model="newCard.imageUrl" placeholder="Image URL" required />
+      <input v-model="newCard.isActive" placeholder="Active" type="checkbox" />
       <button type="submit">Add Card</button>
     </form>
 
     <h4 style="margin-top: 2rem;">Existing Cards</h4>
     <ul>
-      <li v-for="card in cards" :key="card.id" style="margin-bottom: 1rem;">
+      <li v-for="card in cards?.content" :key="card.id" style="margin-bottom: 1rem;">
         {{ card.title }} (ID: {{ card.id }})
         <button @click="startEditing(card)">Edit</button>
-        <button @click="openStockForm(card.id)">Add Stock Items</button>
+        <template v-if="card?.deliveryType === DeliveryType.READY_TO_SHIP">
+          <button @click="openStockForm(card.id)">Add Stock Items</button>
+        </template>
         <!-- <button @click="deleteCard(card.id)">Delete</button> -->
         <div v-if="showStockFormFor === card.id" style="margin-top: 1rem; border: 1px solid #aaa; padding: 1rem;">
           <h5>Add Stock Items to {{ card.title }}</h5>
-          <textarea v-model="stockCodes" placeholder="Enter codes, separated by comma, space, or newline" rows="4"></textarea>
+          <input v-model="stockCount" type="number" placeholder="Count" required></input>
           <div style="margin-top: 0.5rem;">
             <button @click="addStockItems(card.id)">Submit</button>
             <button @click="cancelStockForm" style="margin-left: 0.5rem;">Cancel</button>
@@ -121,6 +134,7 @@ onMounted(fetchAllCards);
         <input v-model="editingCard.price" type="number" placeholder="Price" required />
         <input v-model="editingCard.code" placeholder="Code" required />
         <input v-model="editingCard.imageUrl" placeholder="Image URL" required />
+        <input v-model="editingCard.isActive" type="checkbox" placeholder="Active" required />
         <!-- <button @click="updateCard">Save Changes</button> -->
         <button type="button" @click="cancelEditing">Cancel</button>
       </form>

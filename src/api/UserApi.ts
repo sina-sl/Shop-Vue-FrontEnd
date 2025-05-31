@@ -1,17 +1,15 @@
 import { AxiosInstance } from 'axios';
-
-export interface UserProfileResponse {
-  id: number;
-  email: string;
-  role: string;
-  createdAt: string;
-  provider: string;
-}
+import type { User } from './types.ts';
 
 export class UserApi {
   constructor(private axios: AxiosInstance) {}
 
-  getProfile() {
-    return this.axios.get<UserProfileResponse>('/me');
+  async getProfile() {
+    return this.axios.get<User>('/me');
   }
-} 
+
+  // اگر خواستی متد getUserCards هم فعال بشه، می‌تونه اینجوری باشه:
+  // async getUserCards() {
+  //   return this.axios.get<PurchasedCard[]>('/me/cards');
+  // }
+}
