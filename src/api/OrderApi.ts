@@ -17,7 +17,7 @@ export class OrderApi {
     return this.axios.get<Page<Order>>('/orders', { params });
   }
 
-  async createOrder(cardId: number) {
-    return this.axios.post<Order>('/orders/create', { cardId });
+  async createOrder(productId: number) {
+    return this.axios.post<Order>('/orders/create', { productId });
   }
 }

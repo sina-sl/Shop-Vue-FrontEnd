@@ -1,68 +1,54 @@
 <template>
-  <div>
-    <h3>Card Store</h3>
-    <div v-if="isLoading">Loading cards...</div>
-    <div v-else-if="error" style="color: red;">{{ error }}</div>
-    <ul v-else>
-      <li v-for="card in cards?.content" :key="card.id">
-        {{ card.title }} - ${{ card.price }}
-        <span v-if="card.availableStockCount" style="color: green; margin-left: 0.5em; margin-right: .5em">Available</span>
-        <span v-else style="color: gray; margin-left: 0.5em;">Unavailable</span>
-        <button :disabled="!card.availableStockCount || ordering === card.id" @click="orderCard(card)">Buy</button>
-        <div v-if="ordering === card.id">Ordering...</div>
-      </li>
-    </ul>
-  </div>
+  <h3>Product Store</h3>
+  <div v-if="isLoading">Loading products...</div>
+  <ul>
+    <li v-for="product in products?.content" :key="product.id">
+      {{ product.title }} - ${{ product.price }}
+      <span v-if="product.availableStockCount" style="color: green; margin-left: 0.5em; margin-right: .5em">Available</span>
+      <button :disabled="!product.availableStockCount || ordering === product.id" @click="orderProduct(product)">Buy</button>
+      <div v-if="ordering === product.id">Ordering...</div>
+    </li>
+  </ul>
+  <div v-if="error">{{ error }}</div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { useApiClient } from '@/api/ApiClient';
-import { useRouter } from 'vue-router';
-import {CardWithStockCountDto, Page} from "@/api/types.ts";
+import {ProductWithStockCountDto, Page} from "@/api/types.ts";
+import {ref, onMounted} from 'vue';
+import {useApiClient} from '@/api/ApiClient';
 
 const api = useApiClient();
-const router = useRouter();
-
-
-const cards = ref<Page<CardWithStockCountDto> | null>(null);
-const isLoading = ref(true);
-const ordering = ref<Number | null>(null);
+const products = ref<Page<ProductWithStockCountDto> | null>(null);
+const isLoading = ref(false);
 const error = ref<string | null>(null);
+const ordering = ref<number | null>(null);
 
-const orderCard = async (card: CardWithStockCountDto) => {
-  ordering.value = card.id;
-  try {
-    const res = await api.order.createOrder(card.id);
-    const orderId = res.data.id;
-    if (orderId) {
-      router.push({
-        name: 'OrderDetails',
-        params: { orderId },
-      });
-    } else {
-      router.push({ name: 'UserOrders' });
-    }
-    ordering.value = null;
-  } catch (e) {
-    console.log(e)
-  }
-}
-
-const fetchCards = async () => {
+const fetchProducts = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const res = await api.card.searchActiveCards({});
-    cards.value = res.data;
+    const res = await api.product.searchActiveProducts({});
+    products.value = res.data;
   } catch (err: any) {
-    error.value = err.response?.data || 'Failed to fetch cards';
+    error.value = err.response?.data || 'Failed to fetch products';
   } finally {
     isLoading.value = false;
   }
 };
 
-onMounted(fetchCards);
+const orderProduct = async (product: ProductWithStockCountDto) => {
+  ordering.value = product.id;
+  try {
+    await api.order.createOrder(product.id);
+    // handle success
+  } catch (err: any) {
+    error.value = err.response?.data || 'Failed to order product';
+  } finally {
+    ordering.value = null;
+  }
+};
+
+onMounted(fetchProducts);
 </script>
 
 <style scoped>

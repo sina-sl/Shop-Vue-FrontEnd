@@ -4,18 +4,17 @@ import axios, { AxiosInstance } from 'axios';
 import { App, inject } from 'vue';
 import { AuthApi } from '@/api/AuthApi';
 import { UserApi } from '@/api/UserApi';
-import { CardApi } from '@/api/CardApi';
+import { ProductApi } from '@/api/ProductApi';
 import { OrderApi } from '@/api/OrderApi';
 import { PaymentApi } from '@/api/PaymentApi';
-import {AdminApi} from "@/api/AdminApi.ts";
-
+import { AdminApi } from '@/api/AdminApi.ts';
 
 const apiKey = Symbol('ApiClient'); // Injection key
 
 export class ApiClient {
   public auth!: AuthApi;
   public user!: UserApi;
-  public card!: CardApi;
+  public product!: ProductApi;
   public admin!: AdminApi;
   public order!: OrderApi;
   public payment!: PaymentApi;
@@ -35,7 +34,7 @@ export class ApiClient {
 
     this.auth = new AuthApi(this.axios);
     this.user = new UserApi(this.axios);
-    this.card = new CardApi(this.axios);
+    this.product = new ProductApi(this.axios);
     this.order = new OrderApi(this.axios);
     this.admin = new AdminApi(this.axios);
     this.payment = new PaymentApi(this.axios);

@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import {onMounted, ref} from 'vue';
 import {useApiClient} from '@/api/ApiClient';
-import {CardCreationData, CardWithStockCountDto, DeliveryType, Page, PricingType} from "@/api/types.ts";
+import {ProductCreationData, ProductWithStockCountDto, Page, PricingType, PrepStatus, ProductType} from "@/api/types.ts";
 
 const api = useApiClient();
 
-const cards = ref<Page<CardWithStockCountDto> | null>(null);
-const newCard = ref<CardCreationData>({
+const products = ref<Page<ProductWithStockCountDto> | null>(null);
+const newProduct = ref<ProductCreationData>({
   code: '',
   title: '',
   price: 0,
@@ -14,50 +14,61 @@ const newCard = ref<CardCreationData>({
   isActive: false,
   description: '',
   pricingType: PricingType.LOCAL,
-  deliveryType: DeliveryType.READY_TO_SHIP
+  prepStatus: PrepStatus.READY_TO_SHIP,
+  productType: ProductType.DIGITAL
 });
 
 
-const editingCard = ref<CardCreationData | null>(null);
+const editingProduct = ref<(Partial<ProductCreationData> & {id: number}) | null>(null);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 const showStockFormFor = ref<number|null>(null);
 const stockCount = ref<number>(0);
 
-const fetchAllCards = async () => {
+const fetchAllProducts = async () => {
   error.value = null;
   success.value = null;
   try {
-    const res = await api.admin.searchCards({});
-    cards.value = res.data;
+    const res = await api.admin.searchProducts({});
+    products.value = res.data;
   } catch (err: any) {
-    error.value = err.response?.data || 'Failed to fetch cards';
+    error.value = err.response?.data || 'Failed to fetch products';
   }
 };
 
-const addNewCard = async () => {
+const addNewProduct = async () => {
   error.value = null;
   success.value = null;
   try {
-    await api.admin.addCard(newCard.value);
-    success.value = 'Card added successfully!';
-    newCard.value = { title: '', description: '', price: 0, code: '', imageUrl: '' };
-    fetchAllCards(); // Refresh list
+    await api.admin.addProduct(newProduct.value);
+    success.value = 'Product added successfully!';
+    newProduct.value = { 
+      title: '', 
+      description: '', 
+      price: 0, 
+      code: '', 
+      imageUrl: '', 
+      isActive: false, 
+      pricingType: PricingType.LOCAL,
+      prepStatus: PrepStatus.READY_TO_SHIP,
+      productType: ProductType.DIGITAL
+    };
+    fetchAllProducts(); // Refresh list
   } catch (err: any) {
-    error.value = err.response?.data || 'Failed to add card';
+    error.value = err.response?.data || 'Failed to add product';
   }
 };
 
-const startEditing = (card: CardResponse) => {
-  editingCard.value = { ...card }; // Create a copy for editing
+const startEditing = (product: ProductWithStockCountDto) => {
+  editingProduct.value = { ...product }; // Create a copy for editing
 };
 
 const cancelEditing = () => {
-  editingCard.value = null;
+  editingProduct.value = null;
 };
 
-const openStockForm = (cardId: number) => {
-  showStockFormFor.value = cardId;
+const openStockForm = (productId: number) => {
+  showStockFormFor.value = productId;
   stockCount.value = 0;
 };
 
@@ -66,76 +77,76 @@ const cancelStockForm = () => {
   stockCount.value = 0;
 };
 
-const addStockItems = async (cardId: number) => {
+const addStockItems = async (productId: number) => {
   error.value = null;
   success.value = null;
   try {
     // Split codes by comma, newline, or space, and filter out empty strings
-    if (!stockCount.value > 0) {
+    if (stockCount.value <= 0) {
       error.value = 'Count must be greater than 0';
       return;
     }
-    await api.admin.addStockItems({ cardId, count: stockCount.value });
-    success.value = `Added ${stockCount.value} stock item(s) to card.`;
+    await api.admin.addStockItems({ productId, count: stockCount.value });
+    success.value = `Added ${stockCount.value} stock item(s) to product.`;
     cancelStockForm();
-    fetchAllCards();
+    fetchAllProducts();
   } catch (err: any) {
     error.value = err.response?.data || 'Failed to add stock items';
   }
 };
 
-// You would need backend endpoints for updating/deleting cards
-// const updateCard = async () => { /* ... */ };
-// const deleteCard = async (id: number) => { /* ... */ };
+// You would need backend endpoints for updating/deleting products
+// const updateProduct = async () => { /* ... */ };
+// const deleteProduct = async (id: number) => { /* ... */ };
 
-onMounted(fetchAllCards);
+onMounted(fetchAllProducts);
 
 </script>
 
 <template>
   <div>
-    <h3>Admin Card Management</h3>
-    <h4>Add New Card</h4>
-    <form @submit.prevent="addNewCard" style="display: flex; flex-direction: column; gap: 0.5rem;">
-      <input v-model="newCard.title" placeholder="Title" required />
-      <textarea v-model="newCard.description" placeholder="Description" required></textarea>
-      <input v-model="newCard.price" type="number" placeholder="Price" required />
-      <input v-model="newCard.code" placeholder="Code" required />
-      <input v-model="newCard.imageUrl" placeholder="Image URL" required />
-      <input v-model="newCard.isActive" placeholder="Active" type="checkbox" />
-      <button type="submit">Add Card</button>
+    <h3>Admin Product Management</h3>
+    <h4>Add New Product</h4>
+    <form @submit.prevent="addNewProduct" style="display: flex; flex-direction: column; gap: 0.5rem;">
+      <input v-model="newProduct.title" placeholder="Title" required />
+      <textarea v-model="newProduct.description" placeholder="Description" required></textarea>
+      <input v-model="newProduct.price" type="number" placeholder="Price" required />
+      <input v-model="newProduct.code" placeholder="Code" required />
+      <input v-model="newProduct.imageUrl" placeholder="Image URL" required />
+      <input v-model="newProduct.isActive" placeholder="Active" type="checkbox" />
+      <button type="submit">Add Product</button>
     </form>
 
-    <h4 style="margin-top: 2rem;">Existing Cards</h4>
+    <h4 style="margin-top: 2rem;">Existing Products</h4>
     <ul>
-      <li v-for="card in cards?.content" :key="card.id" style="margin-bottom: 1rem;">
-        {{ card.title }} (ID: {{ card.id }})
-        <button @click="startEditing(card)">Edit</button>
-        <template v-if="card?.deliveryType === DeliveryType.READY_TO_SHIP">
-          <button @click="openStockForm(card.id)">Add Stock Items</button>
+      <li v-for="product in products?.content" :key="product.id" style="margin-bottom: 1rem;">
+        {{ product.title }} (ID: {{ product.id }})
+        <button @click="startEditing(product)">Edit</button>
+        <template v-if="product?.prepStatus === PrepStatus.READY_TO_SHIP">
+          <button @click="openStockForm(product.id)">Add Stock Items</button>
         </template>
-        <!-- <button @click="deleteCard(card.id)">Delete</button> -->
-        <div v-if="showStockFormFor === card.id" style="margin-top: 1rem; border: 1px solid #aaa; padding: 1rem;">
-          <h5>Add Stock Items to {{ card.title }}</h5>
+        <!-- <button @click="deleteProduct(product.id)">Delete</button> -->
+        <div v-if="showStockFormFor === product.id" style="margin-top: 1rem; border: 1px solid #aaa; padding: 1rem;">
+          <h5>Add Stock Items to {{ product.title }}</h5>
           <input v-model="stockCount" type="number" placeholder="Count" required></input>
           <div style="margin-top: 0.5rem;">
-            <button @click="addStockItems(card.id)">Submit</button>
+            <button @click="addStockItems(product.id)">Submit</button>
             <button @click="cancelStockForm" style="margin-left: 0.5rem;">Cancel</button>
           </div>
         </div>
       </li>
     </ul>
 
-    <div v-if="editingCard" style="margin-top: 2rem; border: 1px solid #ccc; padding: 1rem;">
-      <h4>Edit Card (ID: {{ editingCard.id }})</h4>
+    <div v-if="editingProduct" style="margin-top: 2rem; border: 1px solid #ccc; padding: 1rem;">
+      <h4>Edit Product (ID: {{ editingProduct.id }})</h4>
       <form style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <input v-model="editingCard.title" placeholder="Title" required />
-        <textarea v-model="editingCard.description" placeholder="Description" required></textarea>
-        <input v-model="editingCard.price" type="number" placeholder="Price" required />
-        <input v-model="editingCard.code" placeholder="Code" required />
-        <input v-model="editingCard.imageUrl" placeholder="Image URL" required />
-        <input v-model="editingCard.isActive" type="checkbox" placeholder="Active" required />
-        <!-- <button @click="updateCard">Save Changes</button> -->
+        <input v-model="editingProduct.title" placeholder="Title" required />
+        <textarea v-model="editingProduct.description" placeholder="Description" required></textarea>
+        <input v-model="editingProduct.price" type="number" placeholder="Price" required />
+        <input v-model="editingProduct.code" placeholder="Code" required />
+        <input v-model="editingProduct.imageUrl" placeholder="Image URL" required />
+        <input v-model="editingProduct.isActive" type="checkbox" placeholder="Active" required />
+        <!-- <button @click="updateProduct">Save Changes</button> -->
         <button type="button" @click="cancelEditing">Cancel</button>
       </form>
     </div>

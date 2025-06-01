@@ -16,57 +16,58 @@ export enum PricingType {
     CURRENCY_BASED = 'CURRENCY_BASED',
 }
 
-export enum DeliveryType {
+export enum PrepStatus {
     READY_TO_SHIP = 'READY_TO_SHIP',
     PREPARATION_REQUIRED = 'PREPARATION_REQUIRED',
 }
 
-export interface Card {
-    id: number;
-    title: string;
-    price: number;
-    imageUrl: string;
-    description: string;
-    isActive: boolean;
-    createdAt: string; // ISO format
-    pricingType: PricingType;
-    deliveryType: DeliveryType;
+export enum ProductType {
+    PHYSICAL = 'PHYSICAL',
+    DIGITAL = 'DIGITAL',
 }
 
-export interface CardWithStockCountDto {
+export interface Product {
     id: number;
-    title: string;
     price: number;
+    slug: string;
+    title: string;
     imageUrl: string;
+    isActive: boolean;
     description: string;
+    prepStatus: PrepStatus;
     pricingType: PricingType;
-    deliveryType: DeliveryType;
+    productType: ProductType;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface ProductWithStockCountDto extends Product {
     availableStockCount: number;
 }
 
-export interface CardCreationData {
-    title: string
-    description: string
-    price: number
-    code: string
-    imageUrl: string
-    isActive: boolean
-    pricingType: PricingType
-    deliveryType: DeliveryType
+export interface ProductCreationData {
+    title: string;
+    price: number;
+    code: string;
+    imageUrl: string;
+    isActive: boolean;
+    description: string;
+    pricingType: PricingType;
+    prepStatus: PrepStatus;
+    productType: ProductType;
 }
 
-
-export interface CardStockItem {
-    id: number
-    cardId: number
-    orderId?: number | null
-    sold: boolean
-    createdAt: string
+export interface ProductStockItem {
+    id: number;
+    productId: number;
+    orderId?: number | null;
+    sold: boolean;
+    createdAt: string;
 }
 
-export interface  StockItemsCreationData{
-    count: number
-    cardId: number
+export interface StockItemsCreationData {
+    count: number;
+    productId: number;
 }
 
 export enum OrderStatus {
@@ -87,10 +88,9 @@ export interface Order {
     deliveryDate?: string;
     purchaseDate?: string;
     payments: Payment[];
-    card: Card;
+    product: Product;
+    productStockItems?: ProductStockItem[];
 }
-
-
 
 export enum PaymentStatus {
     PENDING = 'PENDING',
@@ -105,13 +105,13 @@ export enum PaymentMethod {
 
 export interface Payment {
     id: number;
-    orderId: number; // چون @JsonIgnore داره خود order حذف می‌شه
+    orderId: number;
     refId?: string | null;
     authority: string;
     status: PaymentStatus;
     paymentMethod: PaymentMethod;
     rawResponse?: string | null;
-    paidAt?: string | null; // ISO date string
+    paidAt?: string | null;
     createdAt: string;
 }
 
@@ -120,9 +120,6 @@ export interface PaymentVerifyResponse {
     referenceId: string;
     message: string;
 }
-
-
-
 
 export interface Page<T> {
     content: T[];
@@ -151,5 +148,19 @@ export interface Page<T> {
     };
     numberOfElements: number;
     empty: boolean;
+}
+
+export interface SignupRequest {
+    email: string;
+    password: string;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface AuthResponse {
+    token: string;
 }
 

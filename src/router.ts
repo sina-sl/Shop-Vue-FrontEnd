@@ -28,8 +28,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import('./pages/dashboard/UserProfilePage.vue'),
       },
       {
-        path: 'cards',
-        name: 'UserCards',
+        path: 'products',
+        name: 'UserProducts',
         component: () => import('./pages/dashboard/UserCardsPage.vue'),
       },
       {
@@ -44,8 +44,8 @@ const routes: RouteRecordRaw[] = [
         props: true,
       },
       {
-        path: 'admin/cards',
-        name: 'AdminCardManagement',
+        path: 'admin/products',
+        name: 'AdminProductManagement',
         component: () => import('./pages/dashboard/AdminCardManagementPage.vue'),
       },
       {
@@ -60,7 +60,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'store',
-        name: 'CardStore',
+        name: 'ProductStore',
         component: () => import('./pages/dashboard/UserCardStorePage.vue'),
       },
     ]

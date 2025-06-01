@@ -1,18 +1,5 @@
 import { AxiosInstance } from 'axios';
-
-export interface SignupRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  token: string;
-}
+import type { SignupRequest, LoginRequest, AuthResponse } from './types.ts';
 
 export class AuthApi {
   constructor(private axios: AxiosInstance) {}

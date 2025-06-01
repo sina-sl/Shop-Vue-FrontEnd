@@ -1,56 +1,54 @@
 <template>
   <div>
-    <h1>My Purchased Cards</h1>
-    <div v-if="loading">Loading purchased cards...</div>
-    <div v-if="error">Error loading purchased cards: {{ error.message }}</div>
-    <div v-if="purchasedCards" class="purchased-cards-list">
-      <div v-for="item in purchasedCards" :key="item.id" class="purchased-card-item">
-        <h2>{{ item.cardTitle }}</h2>
+    <h1>My Purchased Products</h1>
+    <div v-if="loading">Loading purchased products...</div>
+    <div v-if="error">Error loading purchased products: {{ error.message }}</div>
+    <div v-if="purchasedProducts" class="purchased-products-list">
+      <div v-for="item in purchasedProducts" :key="item.id" class="purchased-product-item">
+        <h2>{{ item.productTitle }}</h2>
         <p>Unique Code: {{ item.uniqueCode }}</p>
         <p>Purchase Date: {{ item.purchaseDate }}</p>
-        <!-- Display other relevant purchased card details -->
+        <!-- Display other relevant purchased product details -->
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { useApiClient } from '@/api/ApiClient';
-import type { Order } from '@/api/ApiClient';
+import type { Order } from '@/api/types.ts';
 
-const api = useApiClient();
+const purchasedProducts = ref<Order[] | null>(null);
+const loading = ref(false);
+const error = ref<any>(null);
 
-const purchasedCards = ref<Order[] | null>(null);
-const loading = ref(true);
-const error = ref<Error | null>(null);
-
-const fetchPurchasedCards = async () => {
+const fetchPurchasedProducts = async () => {
+  loading.value = true;
+  error.value = null;
   try {
-    const res = await api.order.getMyOrders();
-    purchasedCards.value = res.data;
+    // Replace with actual API call for purchased products
+    // const res = await api.product.getPurchasedProducts();
+    // purchasedProducts.value = res.data;
   } catch (err) {
-    error.value = err as Error;
+    error.value = err;
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(fetchPurchasedCards);
-
+onMounted(fetchPurchasedProducts);
 </script>
 
 <style scoped>
-.purchased-cards-list {
+.purchased-products-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 1rem;
 }
-
-.purchased-card-item {
+.purchased-product-item {
   border: 1px solid #ccc;
-  padding: 15px;
+  padding: 1rem;
   border-radius: 8px;
-  max-width: 250px;
+  width: 200px;
 }
 </style> 

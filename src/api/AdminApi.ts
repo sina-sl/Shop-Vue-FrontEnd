@@ -1,8 +1,8 @@
 import { AxiosInstance } from 'axios';
 import type {
-    Card,
-    CardCreationData,
-    CardWithStockCountDto,
+    Product,
+    ProductCreationData,
+    ProductWithStockCountDto,
     Order,
     OrderStatus,
     Page,
@@ -13,21 +13,25 @@ export class AdminApi {
 
     constructor(private axios: AxiosInstance) {}
 
-    async addCard(card: CardCreationData) {
-        return this.axios.post<Card>('/admin/cards/add', card)
+    async addProduct(product: ProductCreationData) {
+        return this.axios.post<Product>('/admin/products/add', product)
     }
 
-    async getCardById(id: number) {
-        return this.axios.post<Card>(`/admin/cards/${id}`)
+    async getProductById(id: number) {
+        return this.axios.post<Product>(`/admin/products/${id}`)
     }
 
-    async searchCards(params: {
+    async updateProduct(id: number, data: Partial<ProductCreationData>) {
+        return this.axios.patch<Product>(`/admin/products/${id}`, data);
+    }
+
+    async searchProducts(params: {
         search?: string
         isActive?: boolean
         page?: number
         size?: number
     }) {
-        return this.axios.get<Page<CardWithStockCountDto>>('/admin/cards', { params })
+        return this.axios.get<Page<ProductWithStockCountDto>>('/admin/products', { params })
     }
 
     async addStockItems(req: StockItemsCreationData) {
